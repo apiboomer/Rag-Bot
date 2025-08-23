@@ -1,30 +1,29 @@
-# Müşteri Temsilcisi API
+# Customer Representative API
 
-RAG (Retrieval-Augmented Generation) tabanlı müşteri temsilcisi sistemi. Gemini AI ve ChromaDB kullanarak akıllı soru-cevap sistemi sağlar.
+RAG (Retrieval-Augmented Generation) based customer representative system. Provides intelligent question-answer system using Gemini AI and ChromaDB.
 
-## Özellikler
+## Features
 
-- **RAG Pipeline**: Döküman ekleme ve akıllı soru-cevap
-- **Çoklu İçerik Desteği**: Metin, URL ve dosya yükleme
-- **Vektör Arama**: ChromaDB ile hızlı benzerlik araması
-- **Türkçe Destek**: Müşteri temsilcisi Türkçe yanıtlar verir
-- **Kaynak Gösterimi**: Yanıtların hangi kaynaklardan geldiğini gösterir
+- **RAG Pipeline**: Document ingestion and intelligent Q&A
+- **Multi-Content Support**: Text, URL and file upload
+- **Vector Search**: Fast similarity search with ChromaDB
+- **Source Attribution**: Shows which sources the responses come from
 
-## Kurulum
+## Installation
 
-1. **Bağımlılıkları yükleyin:**
+1. **Install dependencies:**
 ```bash
 pip install -r requirements.txt
 ```
 
-2. **Environment variables ayarlayın:**
+2. **Set up environment variables:**
 ```bash
 cp .env.example .env
 ```
 
-`.env` dosyasını düzenleyip gerekli bilgileri ekleyin:
+Edit the `.env` file and add the necessary information:
 
-**Bulut ChromaDB için:**
+**For Cloud ChromaDB:**
 ```
 GEMINI_API_KEY=your_actual_api_key_here
 CHROMA_HOST=your_chroma_cloud_host
@@ -32,62 +31,62 @@ CHROMA_PORT=443
 CHROMA_API_KEY=your_chroma_api_key
 ```
 
-**Yerel ChromaDB için:**
+**For Local ChromaDB:**
 ```
 GEMINI_API_KEY=your_actual_api_key_here
-# CHROMA_HOST değişkenini boş bırakın veya silin
+# Leave CHROMA_HOST variable empty or delete it
 CHROMA_PERSIST_DIRECTORY=./chroma_db
 ```
 
-3. **API'yi başlatın:**
+3. **Start the API:**
 ```bash
 python main.py
 ```
 
-API `http://localhost:8000` adresinde çalışacaktır.
+The API will run at `http://localhost:8000`.
 
 ## API Endpoints
 
-### Döküman Ekleme
+### Document Ingestion
 
-- **POST** `/api/ingest/text` - Metin içeriği ekle
-- **POST** `/api/ingest/url` - URL içeriğini ekle  
-- **POST** `/api/ingest/file` - Dosya yükle (.txt)
+- **POST** `/api/ingest/text` - Add text content
+- **POST** `/api/ingest/url` - Add URL content  
+- **POST** `/api/ingest/file` - Upload file (.txt)
 
-### Sohbet
+### Chat
 
-- **POST** `/api/chat` - Müşteri temsilcisi ile sohbet et
+- **POST** `/api/chat` - Chat with customer representative
 
-### Yönetim
+### Management
 
-- **GET** `/api/stats` - Sistem istatistikleri
-- **DELETE** `/api/clear` - Veritabanını temizle
-- **GET** `/health` - Sağlık kontrolü
+- **GET** `/api/stats` - System statistics
+- **DELETE** `/api/clear` - Clear database
+- **GET** `/health` - Health check
 
-## API Endpoint'leri Detaylı Kullanım
+## Detailed API Endpoint Usage
 
-### 🏠 Ana Sayfa
+### 🏠 Home Page
 ```bash
 GET /
 ```
-**Açıklama**: API'nin çalışıp çalışmadığını kontrol eder.
+**Description**: Checks if the API is running.
 ```bash
 curl http://localhost:8080/
 ```
-**Yanıt**:
+**Response**:
 ```json
-{"message": "Müşteri Temsilcisi API'sine hoş geldiniz!"}
+{"message": "Welcome to Customer Representative API!"}
 ```
 
-### 🔍 Sağlık Kontrolü
+### 🔍 Health Check
 ```bash
 GET /health
 ```
-**Açıklama**: API durumu ve veritabanındaki döküman sayısını gösterir.
+**Description**: Shows API status and document count in database.
 ```bash
 curl http://localhost:8080/health
 ```
-**Yanıt**:
+**Response**:
 ```json
 {
   "status": "healthy",
@@ -95,26 +94,26 @@ curl http://localhost:8080/health
 }
 ```
 
-### 📝 Metin İçeriği Ekleme
+### 📝 Add Text Content
 ```bash
 POST /api/ingest/text
 ```
-**Açıklama**: Düz metin içeriğini vektör veritabanına ekler.
+**Description**: Adds plain text content to vector database.
 
-**İstek Formatı**:
+**Request Format**:
 ```json
 {
   "text": "string",
-  "metadata": {} // opsiyonel
+  "metadata": {} // optional
 }
 ```
 
-**Örnek**:
+**Example**:
 ```bash
 curl -X POST "http://localhost:8080/api/ingest/text" \
   -H "Content-Type: application/json" \
   -d '{
-    "text": "Şirketimiz Pazartesi-Cuma 09:00-18:00, Cumartesi 10:00-16:00 saatleri arasında hizmet vermektedir. Pazar günleri kapalıyız.",
+    "text": "Our company provides service Monday-Friday 09:00-18:00, Saturday 10:00-16:00. We are closed on Sundays.",
     "metadata": {
       "category": "working_hours",
       "department": "customer_service",
@@ -123,35 +122,35 @@ curl -X POST "http://localhost:8080/api/ingest/text" \
   }'
 ```
 
-**Yanıt**:
+**Response**:
 ```json
 {
-  "message": "Metin başarıyla eklendi",
+  "message": "Text added successfully",
   "chunks_added": 1,
   "total_documents": 16
 }
 ```
 
-### 🌐 URL İçeriği Ekleme
+### 🌐 Add URL Content
 ```bash
 POST /api/ingest/url
 ```
-**Açıklama**: Web sayfasının içeriğini otomatik olarak çeker ve veritabanına ekler.
+**Description**: Automatically fetches web page content and adds it to database.
 
-**İstek Formatı**:
+**Request Format**:
 ```json
 {
   "url": "string",
-  "metadata": {} // opsiyonel
+  "metadata": {} // optional
 }
 ```
 
-**Örnek**:
+**Example**:
 ```bash
 curl -X POST "http://localhost:8080/api/ingest/url" \
   -H "Content-Type: application/json" \
   -d '{
-    "url": "https://example.com/sss",
+    "url": "https://example.com/faq",
     "metadata": {
       "source": "company_website",
       "type": "faq",
@@ -160,71 +159,71 @@ curl -X POST "http://localhost:8080/api/ingest/url" \
   }'
 ```
 
-**Yanıt**:
+**Response**:
 ```json
 {
-  "message": "URL içeriği başarıyla eklendi",
-  "url": "https://example.com/sss",
+  "message": "URL content added successfully",
+  "url": "https://example.com/faq",
   "chunks_added": 5,
   "total_documents": 21
 }
 ```
 
-### 📄 Dosya Yükleme
+### 📄 File Upload
 ```bash
 POST /api/ingest/file
 ```
-**Açıklama**: Text dosyası (.txt) yükleyerek içeriğini veritabanına ekler.
+**Description**: Uploads text file (.txt) and adds its content to database.
 
-**Örnek**:
+**Example**:
 ```bash
 curl -X POST "http://localhost:8080/api/ingest/file" \
   -H "Content-Type: multipart/form-data" \
   -F "file=@/path/to/your/document.txt"
 ```
 
-**Yanıt**:
+**Response**:
 ```json
 {
-  "message": "Dosya başarıyla eklendi",
+  "message": "File added successfully",
   "filename": "document.txt",
   "chunks_added": 3,
   "total_documents": 24
 }
 ```
 
-### 💬 Müşteri Sohbeti
+### 💬 Customer Chat
 ```bash
 POST /api/chat
 ```
-**Açıklama**: RAG sistemi kullanarak müşteri sorularını yanıtlar.
+**Description**: Answers customer questions using RAG system.
 
-**İstek Formatı**:
+**Request Format**:
 ```json
 {
   "message": "string",
-  "conversation_id": "string" // opsiyonel
+  "conversation_id": "string" // optional
 }
 ```
 
-**Örnek**:
+**Example**:
 ```bash
 curl -X POST "http://localhost:8080/api/chat" \
   -H "Content-Type: application/json" \
   -d '{
-    "message": "Cumartesi günü açık mısınız?",
+    "message": "Are you open on Saturdays?",
     "conversation_id": "conv-123"
   }'
 ```
 
-**Yanıt**:
+**Response**:
 ```json
 {
-  "response": "Evet, Cumartesi günleri 10:00-16:00 saatleri arasında hizmet vermekteyiz.",
+  "response": "Yes, we provide service on Saturdays between 10:00-16:00.",
   "conversation_id": "conv-123",
   "sources": [
     {
-      "content": "Şirketimiz Pazartesi-Cuma 09:00-18:00, Cumartesi 10:00-16:00 saatleri arasında...",
+      "content": "Our company provides service Monday-Friday 09:00-18:00, Saturday 10:00-16:00...",
       "metadata": {
         "category": "working_hours",
         "chunk_index": 0
@@ -235,15 +234,15 @@ curl -X POST "http://localhost:8080/api/chat" \
 }
 ```
 
-### 📊 Sistem İstatistikleri
+### 📊 System Statistics
 ```bash
 GET /api/stats
 ```
-**Açıklama**: Veritabanı durumu ve istatistiklerini gösterir.
+**Description**: Shows database status and statistics.
 ```bash
 curl http://localhost:8080/api/stats
 ```
-**Yanıt**:
+**Response**:
 ```json
 {
   "total_documents": 24,
@@ -252,77 +251,77 @@ curl http://localhost:8080/api/stats
 }
 ```
 
-### 🗑️ Veritabanını Temizle
+### 🗑️ Clear Database
 ```bash
 DELETE /api/clear
 ```
-**Açıklama**: Tüm dökümanları siler (DİKKATLİ KULLANIN!).
+**Description**: Deletes all documents (USE WITH CAUTION!).
 ```bash
 curl -X DELETE http://localhost:8080/api/clear
 ```
-**Yanıt**:
+**Response**:
 ```json
 {
-  "message": "Veritabanı başarıyla temizlendi"
+  "message": "Database cleared successfully"
 }
 ```
 
-## Kullanım Senaryoları
+## Usage Scenarios
 
-### 1. **Bilgi Bankası Oluşturma**
+### 1. **Creating Knowledge Base**
 ```bash
-# Çalışma saatleri ekle
+# Add working hours
 curl -X POST "http://localhost:8080/api/ingest/text" \
   -H "Content-Type: application/json" \
-  -d '{"text": "Pazartesi-Cuma 09:00-18:00 açığız"}'
+  -d '{"text": "We are open Monday-Friday 09:00-18:00"}'
 
-# İletişim bilgileri ekle
+# Add contact information
 curl -X POST "http://localhost:8080/api/ingest/text" \
   -H "Content-Type: application/json" \
-  -d '{"text": "Destek için 444-1234 numarasını arayın"}'
+  -d '{"text": "Call 444-1234 for support"}'
 
-# Ürün bilgileri ekle
+# Add product information
 curl -X POST "http://localhost:8080/api/ingest/url" \
   -H "Content-Type: application/json" \
   -d '{"url": "https://company.com/products"}'
 ```
 
-### 2. **Müşteri Sohbeti**
+### 2. **Customer Chat**
 ```bash
-# Soru 1
+# Question 1
 curl -X POST "http://localhost:8080/api/chat" \
   -H "Content-Type: application/json" \
-  -d '{"message": "Kaçta açıksınız?"}'
+  -d '{"message": "What time do you open?"}'
 
-# Soru 2  
+# Question 2  
 curl -X POST "http://localhost:8080/api/chat" \
   -H "Content-Type: application/json" \
-  -d '{"message": "Destek numaranız nedir?"}'
+  -d '{"message": "What is your support number?"}'
 ```
 
-### 3. **Sistem Yönetimi**
+### 3. **System Management**
 ```bash
-# Durum kontrol
+# Status check
 curl http://localhost:8080/api/stats
 
-# Temizlik (gerekirse)
+# Cleanup (if needed)
 curl -X DELETE http://localhost:8080/api/clear
 ```
 
-## Gemini API Key Alma
+## Getting Gemini API Key
 
-1. [Google AI Studio](https://makersuite.google.com/app/apikey)'ya gidin
-2. "Create API Key" butonuna tıklayın
-3. API key'i kopyalayıp `.env` dosyasına ekleyin
+1. Go to [Google AI Studio](https://makersuite.google.com/app/apikey)
+2. Click "Create API Key" button
+3. Copy the API key and add it to `.env` file
 
-## Teknik Detaylar
+## Technical Details
 
 - **Framework**: FastAPI
-- **Vektör DB**: ChromaDB
-- **AI Model**: Gemini 1.5 Pro + Embedding-001
-- **Chunk Size**: 1000 karakter (200 overlap)
+- **Vector DB**: ChromaDB
+- **AI Model**: Gemini 2.0flash + Embedding-001
+- **Chunk Size**: 1000 characters (200 overlap)
 - **Similarity Search**: Cosine similarity
 
-## Geliştirme
+## Development
 
-API dokümantasyonuna `http://localhost:8000/docs` adresinden erişebilirsiniz.
+You can access API documentation at `http://localhost:8000/docs`.

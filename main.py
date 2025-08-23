@@ -22,8 +22,8 @@ logger = logging.getLogger(__name__)
 
 # Initialize FastAPI
 app = FastAPI(
-    title="Müşteri Temsilcisi API",
-    description="RAG tabanlı müşteri temsilcisi sistemi",
+    title="Customer Representative API",
+    description="RAG-based customer representative system",
     version="1.0.0"
 )
 
@@ -155,7 +155,7 @@ def fetch_url_content(url: str) -> str:
 # API Endpoints
 @app.get("/")
 async def root():
-    return {"message": "Müşteri Temsilcisi API'sine hoş geldiniz!"}
+    return {"message": "Welcome to Customer Representative API!"}
 
 @app.get("/health")
 async def health_check():
@@ -163,9 +163,9 @@ async def health_check():
 
 @app.post("/api/ingest/text")
 async def ingest_text(request: IngestRequest):
-    """Metin içeriği veritabanına ekle"""
+    """Add text content to database"""
     try:
-        # Text'i chunk'lara böl
+        # Split text into chunks
         chunks = chunk_text(request.text)
         
         documents = []
@@ -174,10 +174,10 @@ async def ingest_text(request: IngestRequest):
         ids = []
         
         for i, chunk in enumerate(chunks):
-            # Embedding oluştur
+            # Generate embedding
             embedding = generate_embedding(chunk)
             
-            # Metadata hazırla
+            # Prepare metadata
             metadata = {
                 **request.metadata,
                 "chunk_index": i,
@@ -190,7 +190,7 @@ async def ingest_text(request: IngestRequest):
             metadatas.append(metadata)
             ids.append(str(uuid.uuid4()))
         
-        # ChromaDB'ye ekle
+        # Add to ChromaDB
         collection.add(
             documents=documents,
             embeddings=embeddings,
@@ -199,7 +199,7 @@ async def ingest_text(request: IngestRequest):
         )
         
         return {
-            "message": "Metin başarıyla eklendi",
+            "message": "Text added successfully",
             "chunks_added": len(chunks),
             "total_documents": collection.count()
         }
@@ -210,12 +210,12 @@ async def ingest_text(request: IngestRequest):
 
 @app.post("/api/ingest/url")
 async def ingest_url(request: URLIngestRequest):
-    """URL içeriğini veritabanına ekle"""
+    """Add URL content to database"""
     try:
-        # URL'den içerik çek
+        # Fetch content from URL
         content = fetch_url_content(request.url)
         
-        # Text'i chunk'lara böl
+        # Split text into chunks
         chunks = chunk_text(content)
         
         documents = []
@@ -224,10 +224,10 @@ async def ingest_url(request: URLIngestRequest):
         ids = []
         
         for i, chunk in enumerate(chunks):
-            # Embedding oluştur
+            # Generate embedding
             embedding = generate_embedding(chunk)
             
-            # Metadata hazırla
+            # Prepare metadata
             metadata = {
                 **request.metadata,
                 "url": request.url,
@@ -241,7 +241,7 @@ async def ingest_url(request: URLIngestRequest):
             metadatas.append(metadata)
             ids.append(str(uuid.uuid4()))
         
-        # ChromaDB'ye ekle
+        # Add to ChromaDB
         collection.add(
             documents=documents,
             embeddings=embeddings,
@@ -250,7 +250,7 @@ async def ingest_url(request: URLIngestRequest):
         )
         
         return {
-            "message": "URL içeriği başarıyla eklendi",
+            "message": "URL content added successfully",
             "url": request.url,
             "chunks_added": len(chunks),
             "total_documents": collection.count()
@@ -262,29 +262,29 @@ async def ingest_url(request: URLIngestRequest):
 
 @app.post("/api/ingest/file")
 async def ingest_file(file: UploadFile = File(...)):
-    """Dosya içeriğini veritabanına ekle"""
+    """Add file content to database"""
     try:
-        # Dosya içeriğini oku
+        # Read file content
         content = await file.read()
         
-        # Sadece text dosyalarını destekle
+        # Only support text files
         if file.content_type not in ["text/plain", "application/pdf"]:
             raise HTTPException(
                 status_code=400, 
-                detail="Sadece text (.txt) dosyaları desteklenmektedir"
+                detail="Only text (.txt) files are supported"
             )
         
-        # Text'e çevir
+        # Convert to text
         if file.content_type == "text/plain":
             text_content = content.decode('utf-8')
         else:
-            # PDF desteği için ek kütüphane gerekir
+            # Additional library needed for PDF support
             raise HTTPException(
                 status_code=400, 
-                detail="PDF desteği henüz eklenmemiştir"
+                detail="PDF support has not been added yet"
             )
         
-        # Text'i chunk'lara böl
+        # Split text into chunks
         chunks = chunk_text(text_content)
         
         documents = []
@@ -293,10 +293,10 @@ async def ingest_file(file: UploadFile = File(...)):
         ids = []
         
         for i, chunk in enumerate(chunks):
-            # Embedding oluştur
+            # Generate embedding
             embedding = generate_embedding(chunk)
             
-            # Metadata hazırla
+            # Prepare metadata
             metadata = {
                 "filename": file.filename,
                 "content_type": file.content_type,
@@ -310,7 +310,7 @@ async def ingest_file(file: UploadFile = File(...)):
             metadatas.append(metadata)
             ids.append(str(uuid.uuid4()))
         
-        # ChromaDB'ye ekle
+        # Add to ChromaDB
         collection.add(
             documents=documents,
             embeddings=embeddings,
@@ -319,7 +319,7 @@ async def ingest_file(file: UploadFile = File(...)):
         )
         
         return {
-            "message": "Dosya başarıyla eklendi",
+            "message": "File added successfully",
             "filename": file.filename,
             "chunks_added": len(chunks),
             "total_documents": collection.count()
@@ -331,19 +331,19 @@ async def ingest_file(file: UploadFile = File(...)):
 
 @app.post("/api/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
-    """Müşteri ile sohbet et"""
+    """Chat with customer"""
     try:
-        # Kullanıcı sorusu için embedding oluştur
+        # Generate embedding for user question
         query_embedding = generate_embedding(request.message)
         
-        # Benzer dökümanları ara
+        # Search for similar documents
         results = collection.query(
             query_embeddings=[query_embedding],
             n_results=5,
             include=["documents", "metadatas", "distances"]
         )
         
-        # Context oluştur
+        # Create context
         context_docs = []
         sources = []
         
@@ -362,27 +362,27 @@ async def chat(request: ChatRequest):
         
         context = "\n\n".join(context_docs)
         
-        # Prompt oluştur
-        prompt = f"""Sen bir müşteri temsilcisisin. Aşağıdaki bilgi bankasını kullanarak müşterinin sorusunu yanıtla.
+        # Create prompt
+        prompt = f"""You are a customer representative. Answer the customer's question using the knowledge base below.
         
-Bilgi Bankası:
+Knowledge Base:
 {context}
 
-Müşteri Sorusu: {request.message}
+Customer Question: {request.message}
 
-Lütfen:
-1. Türkçe yanıt ver
-2. Yardımsever ve profesyonel ol
-3. Sadece bilgi bankasındaki bilgileri kullan
-4. Eğer bilgi bankasında cevap yoksa, bunu belirt ve yardım için başka bir yol öner
-5. Kısa ve net yanıt ver
+Please:
+1. Respond in English
+2. Be helpful and professional
+3. Only use information from the knowledge base
+4. If the answer is not in the knowledge base, state this and suggest another way to get help
+5. Give short and clear answers
 
-Yanıt:"""
+Response:"""
 
-        # Gemini'den yanıt al
+        # Get response from Gemini
         response_text = generate_response(prompt)
         
-        # Conversation ID oluştur
+        # Create conversation ID
         conversation_id = request.conversation_id or str(uuid.uuid4())
         
         return ChatResponse(
@@ -397,7 +397,7 @@ Yanıt:"""
 
 @app.get("/api/stats")
 async def get_stats():
-    """Sistem istatistikleri"""
+    """System statistics"""
     try:
         total_docs = collection.count()
         return {
@@ -411,9 +411,9 @@ async def get_stats():
 
 @app.delete("/api/clear")
 async def clear_database():
-    """Veritabanını temizle (dikkatli kullanın!)"""
+    """Clear database (use with caution!)"""
     try:
-        # Koleksiyonu sil ve yeniden oluştur
+        # Delete collection and recreate
         chroma_client.delete_collection(name="customer_support_kb")
         global collection
         collection = chroma_client.get_or_create_collection(
@@ -421,7 +421,7 @@ async def clear_database():
             metadata={"hnsw:space": "cosine"}
         )
         
-        return {"message": "Veritabanı başarıyla temizlendi"}
+        return {"message": "Database cleared successfully"}
         
     except Exception as e:
         logger.error(f"Clear database error: {e}")
